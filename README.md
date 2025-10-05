@@ -152,10 +152,12 @@ $ smrt ports
 The `collector.py` script exposes switch metrics for Prometheus. Requires `python3-prometheus-client`.
 
 ```bash
-./collector.py -i eth0 -s 1c:61:b4:cb:e3:e7 -u admin -p your_password --disable-default-metrics
+./collector.py -i eth0 -s 1c:61:b4:cb:e3:e7 -S 10.135.0.129 -u admin -p your_password --disable-default-metrics
 ```
 
 See `./collector.py --help` for all options. The exporter queries the switch on each scrape.
+
+**Unicast mode:** Use `--switch-ip` (or `-S`) to send requests directly to the switch instead of broadcasting. This prevents credentials from being broadcast to the entire subnet. Note: the switch firmware still responds via broadcast, but your password is sent only to the switch.
 
 **Metrics:** Switch info, VLANs, port status (state/link/up), port counters (TX/RX packets)
 
