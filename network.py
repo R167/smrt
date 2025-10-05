@@ -138,8 +138,15 @@ class Network:
 
     def query(self, op_code, payload):
         self.send(op_code, payload)
-        header, payload = self.receive()
-        return header, payload
+        expected_seq = self.sequence_id
+        # Keep receiving until we get a packet with the matching sequence_id
+        max_attempts = 10
+        for attempt in range(max_attempts):
+            header, payload = self.receive()
+            if header['sequence_id'] == expected_seq:
+                return header, payload
+            logger.debug(f"Received packet with sequence {header['sequence_id']}, expecting {expected_seq}, retrying...")
+        raise ConnectionProblem(f"Did not receive response with matching sequence_id after {max_attempts} attempts")
 
     def login_dict(self, username, password):
         return [
