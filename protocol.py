@@ -1,6 +1,9 @@
 import struct
+import logging
 from ipaddress import ip_address
 from binary import byte2ports,mac_to_str
+
+logger = logging.getLogger(__name__)
 
 class Protocol:
     PACKET_END = b'\xff\xff\x00\x00'
@@ -140,12 +143,21 @@ class Protocol:
         while len(payload) > len(Protocol.PACKET_END):
             dtype, dlen = struct.unpack('!hh', payload[0:4])
             data = payload[4:4+dlen]
-            results.append( (
-                dtype,
-                Protocol.ids_tp[dtype][1],
-                Protocol.interpret_value(data, Protocol.ids_tp[dtype][0])
+            if dtype in Protocol.ids_tp:
+                results.append( (
+                    dtype,
+                    Protocol.ids_tp[dtype][1],
+                    Protocol.interpret_value(data, Protocol.ids_tp[dtype][0])
+                    )
                 )
-            )
+            else:
+                logger.debug(f"Unknown field type {dtype}, length {dlen}, data (hex): {data.hex()}")
+                results.append( (
+                    dtype,
+                    f'unknown_{dtype}',
+                    data.hex()
+                    )
+                )
             payload = payload[4+dlen:]
         return results
 
