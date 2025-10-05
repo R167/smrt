@@ -9,6 +9,7 @@ Supposedly supported switches:
 * TL-SG108E (tested)
 * TL-SG108PE
 * TL-SG1016DE (tested)
+* TL-SG116E (tested)
 * TL-SG1024DE
 
 ## Discover switches
@@ -145,6 +146,35 @@ $ smrt ports
 (4096, 'ports', '07:01:00:01:00:00:00')
 (4096, 'ports', '08:01:00:01:00:00:00')
 ```
+
+## Prometheus Exporter
+
+The `collector.py` script exposes switch metrics for Prometheus. Requires `python3-prometheus-client`.
+
+```bash
+./collector.py -i eth0 -s 1c:61:b4:cb:e3:e7 -u admin -p your_password --disable-default-metrics
+```
+
+See `./collector.py --help` for all options. The exporter queries the switch on each scrape.
+
+**Metrics:** Switch info, VLANs, port status (state/link/up), port counters (TX/RX packets)
+
+**Prometheus config:**
+```yaml
+scrape_configs:
+  - job_name: 'tplink-switch'
+    static_configs:
+      - targets: ['localhost:9101']
+```
+
+**Example queries:**
+```promql
+tplink_port_info{up="true"}                          # Ports that are up
+rate(tplink_port_rx_good_packets_total[5m])         # RX packet rate
+tplink_vlan_member{vlan_id="1"}                     # All ports in VLAN 1
+tplink_vlan_member{tagged="true"}                   # All trunk ports
+```
+
 ## Set VLAN settings
 
 ### Syntax
