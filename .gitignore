@@ -3,3 +3,4 @@ __pycache__
 *.txt
 /com/
 .*.swp
+.claude/settings.local.json
