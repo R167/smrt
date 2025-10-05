@@ -20,7 +20,7 @@ class Network:
     UDP_SEND_TO_PORT = 29808
     UDP_RECEIVE_FROM_PORT = 29809
 
-    def __init__(self, interface=None, switch_mac="00:00:00:00:00:00"):
+    def __init__(self, interface=None, switch_mac="00:00:00:00:00:00", switch_ip=None):
 
         # Normally, this module will be initialized with the MAC address of the switch we want to talk to
         # There are however two other modes that might be used:
@@ -28,6 +28,7 @@ class Network:
         # - Specify MAC address ff:ff:ff:ff:ff:ff to go into "fake switch" mode, where we reply to other clients
 
         self.switch_mac = switch_mac
+        self.switch_ip = switch_ip  # Optional: if provided, use unicast instead of broadcast
         self.ip_address, self.host_mac = self.get_interface(interface)
 
         self.sequence_id = random.randint(0, 1000)
@@ -108,7 +109,13 @@ class Network:
         logger.debug('Sending Payload: ' + str(payload))
         if self.switch_mac == "ff:ff:ff:ff:ff:ff":
             self.rs.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_RECEIVE_FROM_PORT))
+        elif self.switch_ip:
+            # Use unicast if switch IP is provided
+            logger.debug(f'Sending unicast to {self.switch_ip}')
+            self.ss.sendto(packet, (self.switch_ip, Network.UDP_SEND_TO_PORT))
         else:
+            # Default to broadcast
+            logger.debug('Sending broadcast')
             self.ss.sendto(packet, (Network.BROADCAST_ADDR, Network.UDP_SEND_TO_PORT))
 
     def setHeader(self, header):

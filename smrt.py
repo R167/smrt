@@ -16,6 +16,7 @@ def main():
     logger = logging.getLogger(__name__)
     parser = argparse.ArgumentParser()
     parser.add_argument('--switch-mac', '-s')
+    parser.add_argument('--switch-ip', '-S')
     parser.add_argument('--interface', '-i')
     parser.add_argument('--username', '-u')
     parser.add_argument('--password', '-p')
@@ -44,7 +45,7 @@ def main():
     else:
         net = None
         try:
-            net = Network(args.interface, args.switch_mac)
+            net = Network(args.interface, args.switch_mac, args.switch_ip)
         except InterfaceProblem as e:
             print("Error:", e)
 

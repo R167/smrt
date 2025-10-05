@@ -27,9 +27,10 @@ class TPLinkSwitchCollector:
         7: 'unknown'
     }
 
-    def __init__(self, interface, switch_mac, username, password):
+    def __init__(self, interface, switch_mac, username, password, switch_ip=None):
         self.interface = interface
         self.switch_mac = switch_mac
+        self.switch_ip = switch_ip
         self.username = username
         self.password = password
 
@@ -37,7 +38,7 @@ class TPLinkSwitchCollector:
         """Called by Prometheus client on each scrape request."""
         try:
             # Connect to switch
-            net = Network(self.interface, self.switch_mac)
+            net = Network(self.interface, self.switch_mac, self.switch_ip)
             net.login(self.username, self.password)
 
             # Get switch info (hostname query)
@@ -232,6 +233,8 @@ def main():
                        help='Network interface to use')
     parser.add_argument('--switch-mac', '-s', required=True,
                        help='MAC address of the switch')
+    parser.add_argument('--switch-ip', '-S',
+                       help='IP address of the switch (uses unicast instead of broadcast)')
     parser.add_argument('--username', '-u', default='admin',
                        help='Switch username (default: admin)')
     parser.add_argument('--password', '-p', required=True,
@@ -263,7 +266,8 @@ def main():
         args.interface,
         args.switch_mac,
         args.username,
-        args.password
+        args.password,
+        args.switch_ip
     )
     REGISTRY.register(collector)
 
