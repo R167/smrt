@@ -37,7 +37,7 @@ def main():
         for ip, mac, header, payload in switches:
             if args.command:
                 p = {x[1]: x[2] for x in payload}
-                cmd = f"./smrt.py --username admin --password admin --host-mac={mac} --ip-address={ip} --switch-mac {p['mac']}"
+                cmd = f"./smrt.py --username admin --password admin -i {args.interface} --switch-mac {p['mac']}"
                 print(cmd)
             else:
                 print(ip, mac, *payload, sep="\n")
