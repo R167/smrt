@@ -126,8 +126,14 @@ class TPLinkSwitchCollector:
 
             vlan_info = InfoMetricFamily(
                 'tplink_vlan',
-                'VLAN configuration',
+                'VLAN name and configuration',
                 labels=['vlan_id']
+            )
+
+            vlan_member = GaugeMetricFamily(
+                'tplink_vlan_member',
+                'VLAN membership per port (1=member, 0=not member)',
+                labels=['vlan_id', 'port', 'tagged']
             )
 
             # Parse and export VLAN data
@@ -140,15 +146,26 @@ class TPLinkSwitchCollector:
                 elif item[1] == 'vlan':
                     # VLAN format: [vlan_id, member_ports, tagged_ports, vlan_name]
                     vlan_id, member_ports, tagged_ports, vlan_name = item[2]
+
+                    # Add VLAN info (just name)
                     vlan_info.add_metric(
                         [str(vlan_id)],
-                        {
-                            'name': vlan_name,
-                            'member_ports': member_ports,
-                            'tagged_ports': tagged_ports
-                        }
+                        {'name': vlan_name}
                     )
-                    logger.debug(f"VLAN {vlan_id} ({vlan_name}): members={member_ports}, tagged={tagged_ports}")
+
+                    # Parse member and tagged ports
+                    member_set = set(member_ports.split(',')) if member_ports else set()
+                    tagged_set = set(tagged_ports.split(',')) if tagged_ports else set()
+
+                    # Add a metric for each port's membership
+                    for port in member_set:
+                        is_tagged = 'true' if port in tagged_set else 'false'
+                        vlan_member.add_metric(
+                            [str(vlan_id), port, is_tagged],
+                            1
+                        )
+
+                    logger.debug(f"VLAN {vlan_id} ({vlan_name}): {len(member_set)} members, {len(tagged_set)} tagged")
 
             # Parse and export PVID data
             for item in pvid_payload:
@@ -191,6 +208,7 @@ class TPLinkSwitchCollector:
             # Yield all metrics
             yield vlan_enabled
             yield vlan_info
+            yield vlan_member
             yield port_pvid
             yield port_info
             yield port_tx_good
